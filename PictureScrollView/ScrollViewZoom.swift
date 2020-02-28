@@ -41,6 +41,8 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
     var shouldShowTopView: Bool = false
     var parentView: UIView!
     
+    var viewSize: CGSize?
+    
     //Struct holds the imageviews and index that is currently being used
     struct ScrollViewStorage {
         var storedViews: [UIImageView]
@@ -151,7 +153,6 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
             //tempImageView was only for the animation so remove it from the superview as it is unnecessary now
             tempImageView.removeFromSuperview()
         }
-        print(superScrollView.subviews)
     }
     
     
@@ -208,7 +209,9 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
                     }
                 }
             }
-            superScrollView.zoom(to: superScrollView.frame, animated: true)
+            let zoomOut = CGRect(x: 0, y: 0, width: superScrollView.subviews[0].frame.size.width * superScrollView.zoomScale, height: superScrollView.subviews[0].frame.size.height * zoomScale)
+            print("Zooming out to: ", zoomOut)
+            superScrollView.zoom(to: zoomOut, animated: true)
             zoomed = false
         } else {
             if (!topView.isHidden) {
@@ -228,18 +231,26 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
                     }
                 }
             }
-            let point = sender.location(in: superScrollView)
-            superScrollView.zoom(to: CGRect(x: point.x - 50 - superScrollView.contentOffset.x,
-                                            y: point.y - 50,
-                                            width: 100,
-                                            height: 100),
-                                            animated: true)
+            let point = sender.location(in: superScrollView.subviews[0])
+            let superScrollViewPoint = sender.location(in: superScrollView)
+            print("scrollviews, " , superScrollView.subviews)
+            let centerPoint = CGPoint(x: ((superScrollViewPoint.x)), y: (
+                superScrollViewPoint.y))
+            print("image view size: ", superScrollView.subviews[0].frame.size)
+            print("zoom scale: ", superScrollView.zoomScale)
+            print("This is where i want to be", superScrollViewPoint, "calced point: ", centerPoint)
+            self.superScrollView.zoom(to: CGRect(x: centerPoint.x,
+                                                 y: centerPoint.y,
+                                                 width: 100 / self.superScrollView.zoomScale,
+                                                 height: 100 / self.superScrollView.zoomScale),
+                                      animated: true)
+            
             zoomed = true
         }
     }
     
     @objc func handlePan(_ sender: UIPanGestureRecognizer) {
-        print(self.subviews)
+        
         let percentThreshold = 0.3
         let upwardPercentThreshold = -(percentThreshold)
         let translation = sender.translation(in: self.parentView)
@@ -309,7 +320,6 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
  
     
     func cancel() {
-        print(self.superScrollView)
         superScrollView.isScrollEnabled = true
         UIView.animate(withDuration: 0.4, animations: {
             if let scrollView = self.superScrollView {
@@ -416,7 +426,6 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
         }
     }
     
-    
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         if superScrollView == scrollView {
             if scrollView.subviews.count != 1 {
@@ -430,13 +439,58 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
                 }
                 storedScrollData.index = index
                 scrollView.contentSize = parentView.frame.size
-                scrollView.subviews[0].frame = CGRect(x: 0, y: 0, width: parentView.frame.size.width, height: parentView.frame.size.height)
+                guard let imageView = scrollView.subviews[0] as? UIImageView else { return nil }
+                superScrollView.subviews[0].removeFromSuperview()
+                let imageView2 = UIImageView()
+                imageView2.image = imageView.image
+                imageView2.tag = imageView.tag
+                //imageView2.contentMode = .scaleAspectFit
+                //imageView2.frame.size = CGSize(width: superScrollView.frame.size.width, height: superScrollView.frame.size.width)
+                imageView2.sizeToFit()
+                viewSize = superScrollView.frame.size
+                superScrollView.addSubview(imageView2)
+                superScrollView.setZoomScale()
+                superScrollView.contentSize = imageView2.bounds.size
+                
+                superScrollView.contentInsetAdjustmentBehavior = .never // Adjust content according to safe area if necessary
+                superScrollView.showsVerticalScrollIndicator = false
+                superScrollView.showsHorizontalScrollIndicator = false
+                superScrollView.alwaysBounceHorizontal = true
+                superScrollView.alwaysBounceVertical = true
+                superScrollView.delegate = self
+                
+                //imageView.frame = CGRect(x: 0, y: 0, width: parentView.frame.size.width, height: parentView.frame.size.height)
+                //imageView.contentMode = .scaleAspectFit
+                //print("size before: ", imageView.frame)
+                //imageView.sizeToFit()
+                //imageView.sizeToFit()
+                //print("size after: ", imageView.frame)
+                //scrollView.contentSize = imageView.bounds.size
+                
+                //imageView.frame.size.width = imageView.contentClippingRect.size.width
+                //imageView.frame.size.height = imageView.contentClippingRect.size.height
+                //imageView.frame.origin.y = (self.frame.height / 2) - (imageView.frame.size.height / 2)// - UIApplication.shared
+                //imageView.clipsToBounds = true
+                //imageView.center = scrollView.center
+                
             }
             scrollView.isPagingEnabled = false
             return scrollView.subviews[0]
         }
         
         return nil
+    }
+ 
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.subviews.count == 1 {
+            guard let imageView = superScrollView.subviews[0] as? UIImageView else { return }
+            let imageViewSize = imageView.frame.size
+            let scrollViewSize = superScrollView.bounds.size
+            let verticalInset = imageViewSize.height < scrollViewSize.height ? (scrollViewSize.height - imageViewSize.height) / 2 : 0
+            let horizontalInset = imageViewSize.width < scrollViewSize.width ? (scrollViewSize.width - imageViewSize.width) / 2 : 0
+            superScrollView.contentInset = UIEdgeInsets(top: verticalInset, left: horizontalInset, bottom: verticalInset, right: horizontalInset)
+        }
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -465,6 +519,7 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
     
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if let scroll = self.superScrollView {
+            
             if scrollView == scroll {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
                     self.paging = false
@@ -473,14 +528,21 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
         }
     }
     
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        print("Done")
+    }
+    
+    //maybe change superscrollviewheight when zoomed in 
     
     func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
-        if scale <= 1.0 {
+        //if scale <= 1.0 {
+        if viewSize!.width >= (view?.frame.size.width)! {
             let x = CGFloat(scrollView.subviews[0].tag) * (parentView.frame.size.width + 20)
             if scrollView.subviews.count == 1 {
                 scrollView.subviews[0].removeFromSuperview()
             }
             self.superScrollView.removeFromSuperview()
+            print("Scrolling to:" ,x)
             self.superScrollView = PictureViewer(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height), imageArray: imagesToView, scrollTo: CGPoint(x: x, y: 0))
             addGestureRecogizers()
             currentWindow?.addSubview(superScrollView)
@@ -495,8 +557,16 @@ class ScrollViewZoom: UIScrollView, UIScrollViewDelegate, UIGestureRecognizerDel
     }
     
     
+    
+    
 }
 
+extension UIView {
+    var globalFrame: CGRect? {
+        let rootView = UIApplication.shared.keyWindow?.rootViewController?.view
+        return self.superview?.convert(self.frame, to: rootView)
+    }
+}
 
 
 

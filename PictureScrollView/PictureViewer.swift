@@ -12,6 +12,11 @@ import UIKit
 class PictureViewer: UIScrollView {
     
     var imgViews: [UIImageView]!
+    override var frame: CGRect {
+        didSet {
+            if frame.size != oldValue.size { setZoomScale() }
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -26,35 +31,18 @@ class PictureViewer: UIScrollView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func getImageViewSize(image: UIImage?) -> CGSize {
-        let containerView = self
-        let imageView = UIImageView()
-
-         if let image = image {
-             let ratio = image.size.width / image.size.height
-             if containerView.frame.width > containerView.frame.height {
-                 let newHeight = containerView.frame.width / ratio
-                 imageView.frame.size = CGSize(width: containerView.frame.width, height: newHeight)
-             }
-             else{
-                 let newWidth = containerView.frame.height * ratio
-                 imageView.frame.size = CGSize(width: newWidth, height: containerView.frame.height)
-             }
-         }
-        return imageView.frame.size
-    }
-    
     func createScrollView(imageArray: [UIImage], frame: CGRect, scrollTo: CGPoint?) {
         var i = 0
         imgViews = [UIImageView]()
         let width = UIScreen.main.bounds.width
+        self.backgroundColor = .green
         self.contentSize = CGSize(width: (width + 20) * CGFloat(4), height: frame.size.height)
         self.maximumZoomScale = 3.0
         self.minimumZoomScale = 1.0
         self.showsHorizontalScrollIndicator = false
         self.showsVerticalScrollIndicator = false
+        self.contentInsetAdjustmentBehavior = .never
         //self.contentInsetAdjustmentBehavior = .always
-        self.backgroundColor = .black
         self.frame = CGRect(x: 0, y: 0, width: frame.size.width + 20, height: frame.size.height)
         self.delegate = delegate
         self.isPagingEnabled = true
@@ -62,6 +50,7 @@ class PictureViewer: UIScrollView {
         
         while i < imageArray.count {
             //let size = getImageViewSize(image: imageArray[i])
+            //print("Image size: ", getImageViewSize(image: imageArray[i], amountOfViews: 4))
             let imageView = UIImageView(frame: CGRect(x: (width + 20) * CGFloat(i), y: 0, width: frame.size.width, height: frame.size.height))
             imageView.backgroundColor = .blue
             //print(self.contentSize.height)
@@ -71,10 +60,14 @@ class PictureViewer: UIScrollView {
             imageView.tag = i
             imageView.isUserInteractionEnabled = true
             imageView.contentMode = .scaleAspectFit
+            //imageView.frame.size.width = imageView.contentClippingRect.size.width
+            //imageView.frame.size.height = imageView.contentClippingRect.size.height
+            //imageView.frame.origin.y = (self.frame.height / 2) - (imageView.frame.size.height / 2)
             imgViews.reverse()
             imgViews.append(imageView)
             //storedScrollData = ScrollViewStorage(storedViews: imgViews, index: 0)
             self.addSubview(imageView)
+            //print("size: ", imageView.contentClippingRect)
             i += 1
         }
         for subview in self.subviews {
@@ -86,4 +79,51 @@ class PictureViewer: UIScrollView {
         }
     }
     
+    public func setZoomScale() {
+        guard let imageView = subviews[0] as? UIImageView else { return }
+        let widthScale = frame.size.width / imageView.bounds.width
+        let heightScale = frame.size.height / imageView.bounds.height
+        let minScale = min(widthScale, heightScale)
+        minimumZoomScale = minScale
+        zoomScale = minScale
+    }
+    
+    
 }
+
+extension PictureViewer: UIScrollViewDelegate {
+    
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+        guard let imageView = scrollView.subviews[0] as? UIImageView else { return }
+        let imageViewSize = imageView.frame.size
+        let scrollViewSize = scrollView.bounds.size
+        let verticalInset = imageViewSize.height < scrollViewSize.height ? (scrollViewSize.height - imageViewSize.height) / 2 : 0
+        let horizontalInset = imageViewSize.width < scrollViewSize.width ? (scrollViewSize.width - imageViewSize.width) / 2 : 0
+        scrollView.contentInset = UIEdgeInsets(top: verticalInset, left: horizontalInset, bottom: verticalInset, right: horizontalInset)
+    }
+    
+}
+
+
+extension UIImageView {
+    var contentClippingRect: CGRect {
+        guard let image = image else { return bounds }
+        guard contentMode == .scaleAspectFit else { return bounds }
+        guard image.size.width > 0 && image.size.height > 0 else { return bounds }
+
+        let scale: CGFloat
+        scale = bounds.width / image.size.width
+//        if image.size.width > image.size.height {
+//            scale = bounds.width / image.size.width
+//        } else {
+//            scale = bounds.height / image.size.height
+//        }
+        
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let x = (bounds.width - size.width) / 2.0
+        let y = (bounds.height - size.height) / 2.0
+
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
+    }
+}
+

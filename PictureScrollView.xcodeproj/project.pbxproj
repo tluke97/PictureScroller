@@ -15,6 +15,7 @@
 		2B6EA68823A5F02D00FC1B62 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2B6EA68623A5F02D00FC1B62 /* LaunchScreen.storyboard */; };
 		2B6EA69023A5F05000FC1B62 /* ScrollViewZoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6EA68F23A5F05000FC1B62 /* ScrollViewZoom.swift */; };
 		2B6EA69223A5F0D200FC1B62 /* PictureViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6EA69123A5F0D200FC1B62 /* PictureViewer.swift */; };
+		2B73A38323BF120E00AEC926 /* ImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B73A38223BF120E00AEC926 /* ImageScrollView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		2B6EA68923A5F02D00FC1B62 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2B6EA68F23A5F05000FC1B62 /* ScrollViewZoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollViewZoom.swift; sourceTree = "<group>"; };
 		2B6EA69123A5F0D200FC1B62 /* PictureViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PictureViewer.swift; sourceTree = "<group>"; };
+		2B73A38223BF120E00AEC926 /* ImageScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageScrollView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +71,7 @@
 				2B6EA68923A5F02D00FC1B62 /* Info.plist */,
 				2B6EA68F23A5F05000FC1B62 /* ScrollViewZoom.swift */,
 				2B6EA69123A5F0D200FC1B62 /* PictureViewer.swift */,
+				2B73A38223BF120E00AEC926 /* ImageScrollView.swift */,
 			);
 			path = PictureScrollView;
 			sourceTree = "<group>";
@@ -147,6 +150,7 @@
 				2B6EA68023A5F02C00FC1B62 /* ViewController.swift in Sources */,
 				2B6EA67C23A5F02C00FC1B62 /* AppDelegate.swift in Sources */,
 				2B6EA69223A5F0D200FC1B62 /* PictureViewer.swift in Sources */,
+				2B73A38323BF120E00AEC926 /* ImageScrollView.swift in Sources */,
 				2B6EA69023A5F05000FC1B62 /* ScrollViewZoom.swift in Sources */,
 				2B6EA67E23A5F02C00FC1B62 /* SceneDelegate.swift in Sources */,
 			);
